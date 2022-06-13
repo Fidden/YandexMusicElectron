@@ -1,17 +1,12 @@
 <template>
-    <div
+    <RouterLink
         v-if="album"
+        :to="{name: 'album', params: {id: props.item.id}}"
         class="album-card"
-        @click="redirect">
-        <div class="album-card-image">
-            <button @click="playAlbum">
-                <i class="fas fa-play"/>
-            </button>
-            <img
-                v-if="album.ogImage"
-                :src="getImage(album.ogImage, '150x150')"
-                :alt="album.title">
-        </div>
+    >
+        <img
+            :alt="album.title"
+            :src="useImage(album, '150x150')">
 
         <h3 class="title">
             {{ album.title }}
@@ -19,50 +14,46 @@
         <p
             v-if="album.artists"
             class="author">
-            {{ getArtist(album.artists) }}
+            {{ useArtists(album.artists) }}
         </p>
-
-        <p class="type">
-            {{ album.type }}
-        </p>
-        <p class="year">
-            {{ album.year }}
-        </p>
-    </div>
+        <div class="album-card-footer">
+            <p
+                v-if="album.type"
+                class="type">
+                {{ album.type }}
+            </p>
+            <p
+                v-if="album.year"
+                class="year">
+                {{ album.year }}
+            </p>
+        </div>
+    </RouterLink>
 </template>
 
-<script>
-import getImage from '../mixins/getImage';
-import MusicApi from '../mixins/MusicApi';
-import GetArtists from '../mixins/GetArtists';
+<script setup>
+import { defineProps, inject, onMounted, ref } from 'vue';
+import useAlbum from '../composables/useAlbum.js';
+import useImage from '../composables/useImage.js';
+import useArtists from '../composables/useArtists.js';
 
-export default {
-    name: 'AlbumCard',
-    mixins: [getImage, MusicApi, GetArtists],
-    props: {
-        id: {
-            type: Number,
-            required: true,
-        },
+const request = inject('$request');
+
+const props = defineProps({
+    item: {
+        type: Object,
+        required: true,
     },
-    data() {
-        return {
-            album: {}
-        };
-    },
-    async mounted() {
-        this.album = await this.getAlbum(this.id);
-    },
-    methods: {
-        async playAlbum() {
-            this.album = await this.getAlbumData(this.id);
-            this.$store.dispatch('setQueue', this.album.volumes[0].map(item => item.id));
-        },
-        redirect() {
-            this.$router.replace({name: 'album', params: {id: this.id}});
-        }
-    }
-};
+});
+
+const album = ref({});
+
+onMounted(async () => {
+    album.value = Object.keys(props.item).length > 1 ?
+        props.item :
+        await useAlbum(request, props.item.id);
+});
+
 </script>
 
 <style scoped>
@@ -72,7 +63,10 @@ export default {
     padding: 10px;
     display: flex;
     flex-direction: column;
-    position: relative;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    max-width: 160px;
 }
 
 .album-card img {
@@ -90,13 +84,15 @@ export default {
     font-size: 12px;
     line-height: 16px;
     color: #8E929C;
-    margin-bottom: 20px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
 }
 
 .type {
-    position: absolute;
-    left: 10px;
-    bottom: 10px;
     font-weight: 400;
     font-size: 12px;
     line-height: 16px;
@@ -104,17 +100,18 @@ export default {
 }
 
 .year {
-    right: 10px;
-    bottom: 10px;
-    position: absolute;
     font-weight: 400;
     font-size: 12px;
     line-height: 16px;
     color: #8E929C;
 }
 
-.album-card-image {
-    position: relative;
+.album-card-footer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding-top: 20px;
+    margin-top: auto;
 }
 
 .album-card-image button {

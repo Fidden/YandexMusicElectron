@@ -1,65 +1,77 @@
 <template>
     <main class="main">
+        <TheNavigation/>
         <div class="item-head">
             <img
-                v-if="playlist.ogImage"
-                :src="getImage(playlist.ogImage, '200x200')"
-                alt="">
+                v-lazy="useImage(playlist, '200x200')"
+                :alt="playlistTitle">
             <div class="item-info">
-                <h2>{{ playlist.title }}</h2>
-                <h3 v-if="playlist.artists">
-                    {{ getArtist(playlist.artists) }}
-                </h3>
-                <h4>{{ playlist.year }} - {{ playlist.type }}</h4>
+                <p class="info-type">
+                    Плейлист
+                </p>
+                <h2>{{ playlistTitle }}</h2>
+
+                <div class="info-row">
+                    <h3
+                        v-if="playlist.owner"
+                        class="info-artists">
+                        Составитель: {{ playlist.owner.name }}
+                    </h3>
+                    <img
+                        alt="circle"
+                        class="info-circle"
+                        src="../assets/img/circle-white.svg">
+                    <p
+                        v-if="playlist.trackCount"
+                        class="info-tracks-count">
+                        {{ useTracksCount(playlist) }}
+                    </p>
+                    <img
+                        alt="circle"
+                        class="info-circle"
+                        src="../assets/img/circle-white.svg">
+                    <p class="info-tracks-duration">
+                        {{ useConvertDuration(playlist.durationMs) }}
+                    </p>
+                </div>
+
                 <div class="item-controls">
-                    <button @click="play">
-                        Слушать
+                    <button
+                        class="btn"
+                        @click="usePlayShuffle($store, playlist.tracks)">
+                        <i class="fas fa-play fa-sm"/> Перемешать
                     </button>
-                    <button>Нравится</button>
-                    <button>Скачать</button>
                 </div>
             </div>
         </div>
-        <div
+        <TheTracksTable
             v-if="playlist.tracks"
-            class="item-body">
-            <div
-                v-for="(track, index) in playlist.tracks"
-                :key="track.id"
-                class="item-body-block">
-                {{ index + 1 }}
-                {{ track.track.title }}
-
-                <span v-if="track.track.version">({{ track.track.version }})</span>
-                <span>{{ ConvertDuration(track.track.durationMs) }}</span>
-            </div>
-        </div>
+            :tracks="playlist.tracks"/>
     </main>
 </template>
 
-<script>
-import MusicApi from '../mixins/MusicApi';
-import GetArtists from '../mixins/GetArtists';
-import getImage from '../mixins/getImage';
-import ConvertDuration from '../mixins/ConvertDuration';
+<script setup>
+import usePlayShuffle from '../composables/usePlayShuffle.js';
+import TheTracksTable from '../components/TheTracksTable.vue';
+import useTracksCount from '../composables/useTracksCount.js';
+import useConvertDuration from '../composables/useConvertDuration.js';
+import useImage from '../composables/useImage.js';
+import { computed, onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
+import usePlaylist from '../composables/usePlaylist.js';
+import TheNavigation from '../components/TheNavigation.vue';
 
-export default {
-    name: 'PlaylistPage',
-    mixins: [MusicApi, GetArtists, getImage, ConvertDuration],
-    data() {
-        return {
-            playlist: {}
-        };
-    },
-    async mounted() {
-        this.playlist = await this.getPlaylistData([this.$route.params.kind]);
-    },
-    methods: {
-        play() {
-            this.$store.dispatch('setQueue', this.playlist.tracks);
-        }
-    },
-};
+const route = useRoute();
+const playlist = ref({});
+
+onMounted(async () => {
+    playlist.value = await usePlaylist(route.params.kind, route.params.uid);
+});
+
+const playlistTitle = computed(() => {
+    return playlist.value.title === '' ? 'Без названия' : playlist.value.title;
+});
+
 </script>
 
 <style scoped>
@@ -67,11 +79,12 @@ export default {
     display: flex;
     flex-direction: row;
     align-items: center;
+    margin-bottom: 40px;
 }
 
 .item-head img {
-    width: 220px;
-    height: 220px;
+    width: 140px;
+    height: 140px;
     margin-right: 20px;
     border-radius: 6px;
 }
@@ -86,6 +99,62 @@ export default {
     flex-direction: row;
     align-items: center;
     gap: 10px;
+}
+
+.item-controls button i {
+    margin-right: 5px;
+}
+
+.item-info-additional p:first-child {
+    margin-right: 5px;
+}
+
+.info-type {
+    font-weight: 400;
+    font-size: 12.8px;
+    line-height: 16px;
+    color: #8E929C;
+    margin-bottom: 10px;
+}
+
+.info-title {
+    font-weight: 500;
+    font-size: 24px;
+    line-height: 16px;
+    color: #FFFFFF;
+    margin-bottom: 20px;
+}
+
+.info-artists, .info-tracks-count, .info-tracks-duration {
+    font-weight: 400;
+    font-size: 12.8px;
+    line-height: 16px;
+    color: #8E929C;
+}
+
+.info-artists a:hover {
+    text-decoration: underline;
+}
+
+.info-tracks-count {
+    color: white;
+}
+
+.info-artists span {
+    color: white;
+}
+
+.info-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 17px;
+}
+
+.info-circle {
+    width: 3px !important;
+    height: 3px !important;
+    margin-inline: 10px !important;
 }
 
 </style>

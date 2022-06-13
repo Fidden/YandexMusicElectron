@@ -1,52 +1,106 @@
 <template>
     <main class="main">
-        <div class="main-container">
+        <div
+            v-if="playLists.length"
+            class="main-container">
             <h2 class="main-container-title">
                 Главное
             </h2>
             <div class="playlists-container">
                 <PlaylistCardSmall
-                    v-for="playlist in lastPlayedPlaylists"
+                    v-for="playlist in playLists"
                     :key="playlist.playlistUuid"
                     :playlist="playlist"
                 />
             </div>
         </div>
         <div class="main-container">
-            <h2 class="main-container-title">
-                Новые релизы<br>
-                <span class="main-container-subtitle">Новые треки, альбомы и сборники</span>
-            </h2>
-            <div class="album-container">
-                <AlbumCard
-                    v-for="release in firstReleases"
-                    :id="release"
-                    :key="release"
-                />
+            <div class="main-container-title">
+                <h2>
+                    Новые релизы<br>
+                    <span class="main-container-subtitle">Новые треки, альбомы и сборники</span>
+                </h2>
+                <RouterLink
+                    :to="{name: 'new-releases'}"
+                    class="main-container-show-all">
+                    Показать все
+                </RouterLink>
             </div>
+            <Flickity
+                v-if="firstReleases.length"
+                ref="flickity"
+                :options="useFlickityOptionsDefault">
+                <div
+                    v-for="release in firstReleases"
+                    :key="release.id"
+                    class="carousel-cell"
+                >
+                    <AlbumCard
+                        :item="release"
+                        @data-loaded="dispatchNewRelease"
+                    />
+                </div>
+            </Flickity>
         </div>
+        <div class="main-container">
+            <div class="main-container-title">
+                <h2>
+                    Хиты и новинки<br>
+                    <span class="main-container-subtitle">Новая популярная музыка для вас от нашей редакции</span>
+                </h2>
+                <RouterLink
+                    :to="{name: 'hits'}"
+                    class="main-container-show-all">
+                    Показать все
+                </RouterLink>
+            </div>
+            <Flickity
+                v-if="firstHits.length"
+                ref="flickity"
+                :options="useFlickityOptionsDefault">
+                <div
+                    v-for="hit in firstHits"
+                    :key="hit.uid + hit.kind"
+                    class="carousel-cell"
+                >
+                    <PlaylistCard
+                        :item="hit"
+                        @data-loaded="dispatchHits"
+                    />
+                </div>
+            </Flickity>
+        </div>
+        <TheChart/>
+        <TheRecentPlayed/>
     </main>
 </template>
 
-<script>
-import {mapGetters, mapState} from 'vuex';
+<script setup>
+//https://api.music.yandex.net/landing3?blocks=personalplaylists,promotions,new-releases,new-playlists,mixes,chart,charts,artists,albums,playlists,play_contexts,podcasts
+import { useStore } from 'vuex';
 import PlaylistCardSmall from '../components/PlaylistCardSmall';
 import AlbumCard from '../components/AlbumCard';
-//https://api.music.yandex.net/landing3?blocks=personalplaylists%2Cpromotions%2Cnew-releases%2Cnew-playlists%2Cmixes%2Cchart%2Ccharts%2Cartists%2Calbums%2Cplaylists%2Cplay_contexts%2Cpodcasts
-export default {
-    name: 'HomePage',
-    components: {AlbumCard, PlaylistCardSmall},
-    computed: {
-        ...mapState([
-            'playlists',
-            'new_releases'
-        ]),
-        ...mapGetters([
-            'lastPlayedPlaylists',
-            'firstReleases'
-        ]),
-    }
-};
+import PlaylistCard from '../components/PlaylistCard';
+import TheChart from '../components/TheChart';
+import { computed } from 'vue';
+import TheRecentPlayed from '../components/TheRecentPlayed.vue';
+import Flickity from 'vue-flickity';
+import useFlickityOptionsDefault from '../composables/useFlickityOptionsDefault.js';
+const store = useStore();
+
+const playLists = computed(() => store.getters.playLists);
+const firstReleases = computed(() => store.getters.firstReleases);
+const firstHits = computed(() => store.getters.firstHits);
+
+
+function dispatchNewRelease(value) {
+    store.dispatch('setNewReleaseData', value);
+}
+
+function dispatchHits(value) {
+    store.dispatch('setHitData', value);
+}
+
 </script>
 
 <style scoped>
@@ -57,31 +111,20 @@ export default {
     gap: 7px;
 }
 
-.main-container {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 45px;
+@media (max-width: 1000px) {
+    .playlists-container .playlist-block:nth-child(n+7) {
+        display: none;
+    }
 }
 
-.main-container-title {
-    font-weight: 500;
-    font-size: 25px;
-    margin-bottom: 20px;
-    line-height: 20px;
-}
+@media (min-width: 1001px) {
+    .playlists-container {
+        grid-template-columns: repeat(6, 1fr);
+    }
 
-.main-container-subtitle {
-    font-weight: 400;
-    font-size: 14px;
-    line-height: 16px;
-    color: #8E929C;
-}
-
-.album-container {
-    display: grid;
-    grid-template-rows: 1fr;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 7px;
+    .playlists-container .playlist-block:nth-child(n+13) {
+        display: none;
+    }
 }
 
 </style>
