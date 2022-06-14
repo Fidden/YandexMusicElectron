@@ -56,16 +56,26 @@ import TheTracksTable from '../components/TheTracksTable.vue';
 import useTracksCount from '../composables/useTracksCount.js';
 import useConvertDuration from '../composables/useConvertDuration.js';
 import useImage from '../composables/useImage.js';
-import { computed, onMounted, ref } from 'vue';
+import { computed, inject, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import usePlaylist from '../composables/usePlaylist.js';
 import TheNavigation from '../components/TheNavigation.vue';
+import useTrack from '../composables/useTrack.js';
 
+const request = inject('$request');
 const route = useRoute();
 const playlist = ref({});
 
 onMounted(async () => {
-    playlist.value = await usePlaylist(route.params.kind, route.params.uid);
+    let _playlist = await usePlaylist(route.params.kind, route.params.uid);
+
+    //note: ингода данные о треке в плейлисте не приходят и поэтому достаем их ручками. Ps в офф приложении сделано так же
+    if (!_playlist.tracks[0]?.track) {
+        let playlistTracks = _playlist.tracks.map(item => `${item.id}:${item.albumId}`);
+        _playlist.tracks = (await useTrack(request, playlistTracks)).map(item => ({track: item}));
+    }
+
+    playlist.value = _playlist;
 });
 
 const playlistTitle = computed(() => {
@@ -115,14 +125,6 @@ const playlistTitle = computed(() => {
     line-height: 16px;
     color: #8E929C;
     margin-bottom: 10px;
-}
-
-.info-title {
-    font-weight: 500;
-    font-size: 24px;
-    line-height: 16px;
-    color: #FFFFFF;
-    margin-bottom: 20px;
 }
 
 .info-artists, .info-tracks-count, .info-tracks-duration {

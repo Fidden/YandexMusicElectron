@@ -12,30 +12,40 @@
             <div class="artist-head-info">
                 <p>Исполнитель</p>
                 <h1>{{ artist.artist.name }}</h1>
+                <div class="artist-head-controls">
+                    <button
+                        class="btn"
+                        @click="usePlayShuffle($store, popularTracks)">
+                        <i class="fas fa-play fa-sm"/> Слушать
+                    </button>
+                    <i class="fal fa-heart"/>
+                </div>
             </div>
         </div>
         <div class="artist-body">
-            <div class="artist-body-title">
-                <h2>Популярные треки</h2>
-                <RouterLink
-                    :to="{name: 'artist-tracks', params: {id: route.params.id, artist_name: artist.artist.name}}">
-                    Посмотреть все
-                </RouterLink>
-            </div>
-            <div
-                v-if="popularTracks.length"
-                class="artist-body-block">
-                <TheTracksTable
-                    :filter-bar="false"
-                    :tracks="popularTracks"/>
+            <div v-if="popularTracks.length">
+                <div class="artist-body-title">
+                    <h2>Популярные треки</h2>
+                    <RouterLink
+                        :to="{name: 'artist-tracks', params: {id: route.params.id, artist_name: artist.artist.name}}">
+                        Посмотреть все
+                    </RouterLink>
+                </div>
+                <div
+                    class="artist-body-block">
+                    <TheTracksTable
+                        :filter-bar="false"
+                        :tracks="popularTracks"/>
+                </div>
             </div>
 
-            <div class="artist-body-block">
+            <div
+                v-if="popularAlbums.length"
+                class="artist-body-block">
                 <div class="artist-body-title">
                     <h2>Популярные альбомы</h2>
                 </div>
                 <Flickity
-                    v-if="popularAlbums.length"
                     ref="flickity"
                     :options="useFlickityOptionsDefault">
                     <div
@@ -48,7 +58,9 @@
                 </Flickity>
             </div>
 
-            <div class="artist-body-block">
+            <div
+                v-if="similarArtists.length"
+                class="artist-body-block">
                 <div class="artist-body-title">
                     <h2>Похожие артисты</h2>
                 </div>
@@ -64,6 +76,7 @@
 </template>
 
 <script setup>
+import usePlayShuffle from '../composables/usePlayShuffle.js';
 import useFlickityOptionsDefault from '../composables/useFlickityOptionsDefault.js';
 import TheTracksTable from '../components/TheTracksTable.vue';
 import AlbumCard from '../components/AlbumCard.vue';
@@ -132,7 +145,6 @@ watch(route, async (value) => {
     margin-left: auto;
 }
 
-/*fixme: сделать 1 классом */
 .artist-body-block {
     display: flex;
     flex-direction: column;
@@ -143,6 +155,18 @@ watch(route, async (value) => {
     grid-template-rows: 1fr;
     grid-template-columns: repeat(5, 1fr);
     gap: 10px;
+}
+
+.artist-head-controls {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+    margin-top: 5px;
+}
+
+.artist-head-controls .fa-heart {
+    cursor: pointer;
 }
 
 

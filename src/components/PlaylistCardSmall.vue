@@ -1,6 +1,6 @@
 <template>
     <RouterLink
-        :to="{name: 'playlist', params: {kind: playlist.kind}}"
+        :to="{name: 'playlist', params: {kind: playlist.kind, uid: playlist.uid}}"
         class="playlist-block">
         <img
             v-lazy="useImage(playlist)"

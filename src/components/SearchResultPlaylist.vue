@@ -1,18 +1,23 @@
 <template>
     <RouterLink
-        :to="{name: 'artist', params: {id: result.id}}"
+        :to="{name: 'playlist', params: {kind: result.kind, uid: result.owner.uid}}"
     >
         <div class="result-best-body">
             <img
                 v-lazy="useImage(result, '100x100')"
                 :alt="result.name">
             <p class="result-best-name">
-                {{ result.name }}
+                {{ result.title }}
             </p>
 
-            <p class="result-best-type">
-                Артист
-            </p>
+            <div class="footer">
+                <div class="result-best-artist">
+                    От {{ result.owner.name }}
+                </div>
+                <p class="result-best-type">
+                    Плейлист
+                </p>
+            </div>
         </div>
     </RouterLink>
 </template>
@@ -27,7 +32,6 @@ defineProps({
         required: true,
     }
 });
-
 </script>
 
 <style scoped>
@@ -41,13 +45,14 @@ defineProps({
 }
 
 .result-best-body img {
+    border-radius: 8px;
     margin-bottom: 20px;
-    border-radius: 50%;
 }
 
 .result-best-name {
     font-size: 28px;
     font-weight: bold;
+    line-height: 28px;
 }
 
 .result-best-type {
@@ -58,5 +63,24 @@ defineProps({
     text-transform: uppercase;
     font-weight: 500;
     font-size: 14px;
+}
+
+.footer {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.result-best-artist {
+    margin-right: 10px;
+}
+
+.result-best-artist a {
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.result-best-artist a:hover {
+    text-decoration: underline;
 }
 </style>

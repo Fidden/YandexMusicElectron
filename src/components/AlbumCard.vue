@@ -12,7 +12,7 @@
             {{ album.title }}
         </h3>
         <p
-            v-if="album.artists"
+            v-if="album.artists && album.type !== 'compilation'"
             class="author">
             {{ useArtists(album.artists) }}
         </p>
@@ -20,7 +20,7 @@
             <p
                 v-if="album.type"
                 class="type">
-                {{ album.type }}
+                {{ type }}
             </p>
             <p
                 v-if="album.year"
@@ -32,7 +32,7 @@
 </template>
 
 <script setup>
-import { defineProps, inject, onMounted, ref } from 'vue';
+import { computed, defineProps, inject, onMounted, ref } from 'vue';
 import useAlbum from '../composables/useAlbum.js';
 import useImage from '../composables/useImage.js';
 import useArtists from '../composables/useArtists.js';
@@ -54,6 +54,17 @@ onMounted(async () => {
         await useAlbum(request, props.item.id);
 });
 
+const type = computed(() => {
+    if (album.value.type === 'compilation')
+        return 'сборник';
+    else if (album.value.type === 'playlist')
+        return 'плейлист';
+    else if (album.value.type === 'single')
+        return 'сингл';
+    else
+        return album.value.type;
+});
+
 </script>
 
 <style scoped>
@@ -65,7 +76,7 @@ onMounted(async () => {
     flex-direction: column;
     cursor: pointer;
     width: 100%;
-    height: 100%;
+    height: 235px;
     max-width: 160px;
 }
 
@@ -74,9 +85,14 @@ onMounted(async () => {
 }
 
 .title {
+    font-size: 13px;
     font-weight: 500;
-    font-size: 12.8px;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
     line-height: 16px;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .author {
@@ -87,8 +103,6 @@ onMounted(async () => {
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
-    display: flex;
-    flex-direction: row;
     align-items: center;
 }
 
@@ -104,13 +118,12 @@ onMounted(async () => {
     font-size: 12px;
     line-height: 16px;
     color: #8E929C;
+    margin-left: auto;
 }
 
 .album-card-footer {
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
-    padding-top: 20px;
     margin-top: auto;
 }
 

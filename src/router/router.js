@@ -35,7 +35,7 @@ const router = createRouter({
 			name: 'tracks'
 		},
 		{
-			path: '/playlist/:kind',
+			path: '/playlist/:kind/:uid',
 			component: PlaylistPage,
 			name: 'playlist',
 		},

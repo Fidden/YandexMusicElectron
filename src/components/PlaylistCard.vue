@@ -6,13 +6,18 @@
     >
         <div class="playlist-card-image">
             <img
-                :src="useImage(playlist, '200x200')"
-                :alt="playlist.title">
+                :alt="playlist.title"
+                :src="useImage(playlist, '200x200')">
         </div>
 
         <h3 class="title">
             {{ playlist.title }}
         </h3>
+        <p
+            v-if="playlist.owner"
+            class="author">
+            От {{ playlist.owner.name }}
+        </p>
         <p
             v-if="tracksCount"
             class="track-count">
@@ -25,6 +30,9 @@
 import useImage from '../composables/useImage.js';
 import { defineProps, onMounted, ref } from 'vue';
 import usePlaylist from '../composables/usePlaylist.js';
+import { useStore } from 'vuex';
+
+const store = useStore();
 
 const props = defineProps({
     item: {
@@ -44,7 +52,7 @@ const playlist = ref({});
 onMounted(async () => {
     playlist.value = Object.keys(props.item).length > 2 ?
         props.item :
-        await usePlaylist(props.item.kind, props.item.uid || null);
+        await usePlaylist(props.item.kind, props.item?.uid || store.getters.userId);
 });
 
 </script>
@@ -60,7 +68,7 @@ onMounted(async () => {
     cursor: pointer;
     max-width: 160px;
     width: 100%;
-    height: 100%;
+    height: 235px;
 }
 
 .playlist-card img {
@@ -87,6 +95,18 @@ onMounted(async () => {
     font-size: 12px;
     line-height: 16px;
     color: #8E929C;
+}
+
+.author {
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 16px;
+    color: #8E929C;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    align-items: center;
+    margin-top: auto;
 }
 
 </style>

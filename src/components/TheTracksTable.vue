@@ -23,7 +23,6 @@
             </tr>
             </thead>
             <tbody>
-            <!--fixme: при клике на артиста трек включается заного (сделать через релатив tr и накинуть сверху блок (z-index))-->
             <tr
                 v-for="(track, index) in filteredTracks"
                 :key="track.id"

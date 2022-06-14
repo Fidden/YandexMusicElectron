@@ -17,9 +17,13 @@
                 <SearchResultTrack
                     v-else-if="response.best.type === 'track'"
                     :result="response.best.result"/>
+
+                <SearchResultPlaylist
+                    v-else-if="response.best.type === 'playlist'"
+                    :result="response.best.result"/>
             </div>
             <div
-                v-if="tracks.length"
+                v-if="tracks?.length"
                 class="result-tracks"
             >
                 <h2 class="result-tracks-title">
@@ -95,11 +99,12 @@ import AlbumCard from '../components/AlbumCard.vue';
 import PlaylistCard from '../components/PlaylistCard.vue';
 import SearchResultArtist from '../components/SearchResultArtist.vue';
 import SearchResultTrack from '../components/SearchResultTrack.vue';
+import SearchResultPlaylist from '../components/SearchResultPlaylist.vue';
 
 const store = useStore();
 
 const response = computed(() => store.state.search.response);
-const tracks = computed(() => store.getters.getSearchTracks.slice(0, 4));
+const tracks = computed(() => store.getters.getSearchTracks?.slice(0, 4));
 </script>
 
 <style scoped>
