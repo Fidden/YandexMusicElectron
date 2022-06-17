@@ -17,6 +17,7 @@ import { ExpirationPlugin } from 'workbox-expiration';
 import { useStore } from 'vuex';
 import { inject, onMounted, watch } from 'vue';
 import useDiscordRPC from './composables/useDiscordRPC.js';
+import useUserMyFavoritesPlaylist from './composables/useUserMyFavoritesPlaylist.js';
 
 
 const store = useStore();
@@ -66,7 +67,7 @@ async function getAccountInfo() {
 
 async function getPlaylists() {
     let res = await request.get(`users/${store.state.user.account.uid}/playlists/list/`);
-    return res.data.result;
+    return [await useUserMyFavoritesPlaylist(request, store)].concat(res.data.result);
 }
 
 async function getNewReleases() {

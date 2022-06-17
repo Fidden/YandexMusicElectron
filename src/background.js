@@ -3,6 +3,7 @@
 import { app, BrowserWindow, ipcMain, protocol } from 'electron';
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
+import 'v8-compile-cache';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -62,6 +63,8 @@ async function createWindow() {
 		await win.loadURL('app://./index.html');
 	}
 }
+
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {

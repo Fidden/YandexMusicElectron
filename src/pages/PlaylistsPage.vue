@@ -14,16 +14,20 @@
 
 <script setup>
 import PlaylistCard from '../components/PlaylistCard.vue';
-import { inject, onMounted, ref } from 'vue';
+import { computed, inject, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import LayoutItems from '../layouts/LayoutItems.vue';
+import useUserMyFavoritesPlaylist from '../composables/useUserMyFavoritesPlaylist.js';
 
 const store = useStore();
 const request = inject('$request');
-const playlists = ref([]);
+const playlists = computed(() => store.getters.playLists);
 
 onMounted(async () => {
-    playlists.value = await getUserPlaylists();
+    if (!playlists.value.length) {
+        playlists.value = await getUserPlaylists();
+        playlists.value = [await useUserMyFavoritesPlaylist(request, store)].concat(playlists.value);
+    }
 });
 
 async function getUserPlaylists() {

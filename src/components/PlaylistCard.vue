@@ -28,11 +28,12 @@
 
 <script setup>
 import useImage from '../composables/useImage.js';
-import { defineProps, onMounted, ref } from 'vue';
+import { defineProps, inject, onMounted, ref } from 'vue';
 import usePlaylist from '../composables/usePlaylist.js';
 import { useStore } from 'vuex';
 
 const store = useStore();
+const request = inject('$request');
 
 const props = defineProps({
     item: {
@@ -52,7 +53,7 @@ const playlist = ref({});
 onMounted(async () => {
     playlist.value = Object.keys(props.item).length > 2 ?
         props.item :
-        await usePlaylist(props.item.kind, props.item?.uid || store.getters.userId);
+        await usePlaylist(request, props.item.kind, props.item?.uid || store.getters.userId);
 });
 
 </script>

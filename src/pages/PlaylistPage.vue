@@ -67,12 +67,17 @@ const route = useRoute();
 const playlist = ref({});
 
 onMounted(async () => {
-    let _playlist = await usePlaylist(route.params.kind, route.params.uid);
+    let _playlist = await usePlaylist(request, route.params.kind, route.params.uid);
 
     //note: ингода данные о треке в плейлисте не приходят и поэтому достаем их ручками. Ps в офф приложении сделано так же
     if (!_playlist.tracks[0]?.track) {
         let playlistTracks = _playlist.tracks.map(item => `${item.id}:${item.albumId}`);
         _playlist.tracks = (await useTrack(request, playlistTracks)).map(item => ({track: item}));
+    }
+
+    if (_playlist.kind === 3) {
+        _playlist.title = 'Мне нравится';
+        _playlist.ogImage = 'music.yandex.ru/blocks/playlist-cover/playlist-cover_like.png';
     }
 
     playlist.value = _playlist;

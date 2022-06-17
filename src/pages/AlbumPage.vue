@@ -32,13 +32,8 @@
                         v-if="album.artists"
                         class="info-artists">
                         Исполнители:
-                        <RouterLink
-                            v-for="(artist, index) in album.artists"
-                            :key="artist.id"
-                            :to="{name: 'artist', params: {id: artist.id}}">
-                            {{ useArtistName(artist, index, album.artists.length) }}
-                        </RouterLink>
                     </h3>
+                    <ArtistsLinks :artists="album.artists"/>
                     <img
                         alt="circle"
                         class="info-circle"
@@ -70,13 +65,13 @@
 
 <script setup>
 import usePlayShuffle from '../composables/usePlayShuffle.js';
-import useArtistName from '../composables/useArtistName.js';
 import TheTracksTable from '../components/TheTracksTable.vue';
 import TheNavigation from '../components/TheNavigation.vue';
 import useImage from '../composables/useImage.js';
 import useTracksCount from '../composables/useTracksCount.js';
 import { inject, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
+import ArtistsLinks from '../components/ArtistsLinks.vue';
 
 const route = useRoute();
 const request = inject('$request');
@@ -148,15 +143,15 @@ onMounted(async () => {
     margin-bottom: 20px;
 }
 
+.info-artists {
+    margin-right: 5px;
+}
+
 .info-artists, .info-tracks-count {
     font-weight: 400;
     font-size: 12.8px;
     line-height: 16px;
     color: #8E929C;
-}
-
-.info-artists a:hover {
-    text-decoration: underline;
 }
 
 .info-tracks-count {

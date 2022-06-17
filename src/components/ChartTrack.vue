@@ -21,15 +21,14 @@
             <img
                 v-lazy="useImage(item.data.track)"
                 :alt="item.data.track.title">
-            <p class="chart-track-body-title">
-                {{ item.data.track.title }}<br>
-                <span>
-                   <ArtistsLinks
-                       :artists="item.data.track.artists"
-                       :small="true"
-                   />
-                </span>
-            </p>
+            <div class="chart-track-body-title">
+                <p>{{ item.data.track.title }}</p>
+                <ArtistsLinks
+                    :artists="item.data.track.artists"
+                    :small="true"
+                    style="font-size: 12px"
+                />
+            </div>
         </div>
         <p class="chart-track-duration">
             {{ useConvertDuration(item.data.track.durationMs) }}
@@ -40,11 +39,14 @@
 <script setup>
 import useConvertDuration from '../composables/useConvertDuration.js';
 import useImage from '../composables/useImage.js';
-import { defineProps } from 'vue';
+import { defineProps, inject } from 'vue';
 import { useStore } from 'vuex';
 import ArtistsLinks from './ArtistsLinks.vue';
+import useTrack from '../composables/useTrack.js';
 
 const store = useStore();
+const request = inject('$request');
+
 const props = defineProps({
     item: {
         type: Object,
@@ -52,8 +54,8 @@ const props = defineProps({
     }
 });
 
-function playTrack() {
-    store.dispatch('unshiftToQueue', props.item.track.id);
+async function playTrack() {
+    await store.dispatch('unshiftToQueue', {track: await useTrack(request, props.item.data.track.id)});
 }
 
 </script>
@@ -104,13 +106,12 @@ function playTrack() {
 }
 
 .chart-track-body-title {
-    line-height: 95%;
+    display: flex;
+    flex-direction: column;
 }
 
-.chart-track-body-title span {
-    color: #8E919A;
-    font-weight: 400;
-    font-size: 12px;
+.chart-track-body-title p {
+    line-height: 14px;
 }
 
 .chart-track-duration {

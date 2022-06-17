@@ -1,11 +1,14 @@
 <template>
-    <RouterLink
-        v-for="(artist, index) in artists"
-        :key="artist.id"
-        :style="{fontSize: small? '12px': '14px'}"
-        :to="{name: 'artist', params: {id: artist.id}}">
-        {{ useArtistName(artist, index, artists.length) }}
-    </RouterLink>
+    <div
+        v-if="artists.length"
+        class="container">
+        <RouterLink
+            v-for="(artist, index) in artists"
+            :key="artist.id"
+            :to="{name: 'artist', params: {id: artist.id}}">
+            {{ useArtistName(artist, index, artists.length) }}
+        </RouterLink>
+    </div>
 </template>
 
 <script setup>
@@ -16,20 +19,22 @@ defineProps({
     artists: {
         type: Array,
         required: true,
-    },
-    small: {
-        type: Boolean,
-        default() {
-            return false;
-        }
     }
 });
 </script>
 
 <style scoped>
-a {
+.container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    overflow: hidden;
     font-size: 14px;
-    margin-right: 5px;
+}
+
+a {
+    font-size: inherit;
+    margin-right: 3px;
 }
 
 a:hover {

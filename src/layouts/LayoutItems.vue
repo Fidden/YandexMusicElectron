@@ -23,4 +23,12 @@
     grid-template-columns: repeat(5, 1fr);
     gap: 7px;
 }
+
+@media (min-width: 1001px) {
+    .container {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+}
 </style>

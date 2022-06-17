@@ -15,7 +15,7 @@ export default {
 			state.queue = queue;
 		},
 		REMOVE_FROM_QUEUE(state, q_item) {
-			let index = state.queue.findIndex(item => item === q_item);
+			let index = state.queue.findIndex(item => item.id === q_item.id);
 			if (index === -1)
 				return;
 			

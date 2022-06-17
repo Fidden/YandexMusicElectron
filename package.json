@@ -17,11 +17,11 @@
     "core-js": "^3.6.5",
     "crypto-js": "^4.1.1",
     "discord-rpc": "^4.0.1",
+    "v8-compile-cache": "^2.3.0",
     "vue": "^3.0.0",
     "vue-debounce": "^4.0.0",
     "vue-lazyload": "^3.0.0-rc.2",
     "vue-router": "^4.0.13",
-    "vue3-virtual-scroller": "^0.2.3",
     "vuex": "^4.0.2"
   },
   "devDependencies": {
@@ -58,10 +58,6 @@
       "parser": "babel-eslint"
     },
     "rules": {
-      "linebreak-style": [
-        "error",
-        "unix"
-      ],
       "quotes": [
         "error",
         "single"

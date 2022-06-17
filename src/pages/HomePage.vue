@@ -93,12 +93,12 @@ const firstReleases = computed(() => store.getters.firstReleases);
 const firstHits = computed(() => store.getters.firstHits);
 
 
-function dispatchNewRelease(value) {
-    store.dispatch('setNewReleaseData', value);
+async function dispatchNewRelease(value) {
+    await store.dispatch('setNewReleaseData', value);
 }
 
-function dispatchHits(value) {
-    store.dispatch('setHitData', value);
+async function dispatchHits(value) {
+    await store.dispatch('setHitData', value);
 }
 
 </script>

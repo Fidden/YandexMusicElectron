@@ -11,37 +11,49 @@
     </main>
 </template>
 
-<script>
-import MusicApi from '../mixins/MusicApi.js';
+<script setup>
 import TheTracksTable from '../components/TheTracksTable.vue';
+import { useStore } from 'vuex';
+import { computed, inject, onMounted } from 'vue';
+import useTrack from '../composables/useTrack.js';
+import usePlaylists from '../composables/usePlaylists.js';
+import usePlaylistsData from '../composables/usePlaylistsData.js';
 
-export default {
-    name: 'TracksPage',
-    components: {TheTracksTable},
-    mixins: [MusicApi],
-    computed: {
-        tracks() {
-            return this.$store.state.user.tracks;
-        }
-    },
-    async mounted() {
-        if (!this.tracks.length) {
-            let playlists = await this.getPlaylists();
-            let kinds = playlists.map(item => item.kind);
-            let playlistWithTracks = await this.getUserPlaylistsData(kinds);
+const store = useStore();
+const request = inject('$request');
 
-            let ids = [];
-            playlistWithTracks.forEach(item => {
+const tracks = computed(() => store.state.user.tracks);
+
+onMounted(async () => {
+    if (!tracks.value.length) {
+        //получаем все плейлисты
+        let playlists = await usePlaylists(request, store);
+        //берем только kind
+        let kinds = playlists.map(item => item.kind);
+        //яндекс музыка не считает плейлистом "мне нравится" поэтому добавим ручками
+        kinds.push(3);
+        //получаем все плейлисты с информацией о треках (id, albumId)
+        let playlistWithTracks = await usePlaylistsData(request, store, kinds);
+
+
+        //форматируем данные
+        let ids = [];
+        playlistWithTracks.forEach(item => {
+            if (item.albumId)
                 ids.push(item.tracks.map(item => `${item.id}:${item.albumId}`));
-            });
+            else
+                ids.push(item.tracks.map(item => `${item.id}`));
+        });
 
-            let tracks = await this.getTracksByIds(ids);
-            tracks = tracks.filter(item => item.available).map(item => ({track: item}));
+        //получаем треки и оставляем только те которые можем послушать
+        let tracks = await useTrack(request, ids);
+        tracks = tracks.filter(item => item.available).map(item => ({track: item}));
 
-            this.$store.dispatch('setUserTracks', tracks);
-        }
+        //записываем чтоб не получать постоянно ибо это занимает минуту
+        await store.dispatch('setUserTracks', tracks);
     }
-};
+});
+
 </script>
 
 <style scoped>

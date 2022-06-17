@@ -6,5 +6,5 @@ export default async function (request, trackIds) {
 		headers: {'Content-Type': 'application/x-www-form-urlencoded'},
 	});
 	
-	return res.data.result;
+	return res.data.result.length === 1 ? res.data.result[0] : res.data.result;
 }

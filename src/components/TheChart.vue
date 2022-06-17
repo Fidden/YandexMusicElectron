@@ -14,7 +14,10 @@
         <div
             v-if="chart.length"
             class="chart-tracks-container">
-            <ChartTrack v-for="item in chart" :key="item.id" :item="item"/>
+            <ChartTrack
+                v-for="item in chart"
+                :key="item.id"
+                :item="item"/>
         </div>
     </div>
 </template>

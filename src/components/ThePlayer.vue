@@ -1,372 +1,391 @@
 <template>
-    <div
-        v-show="currentTrack"
-        class="player-container">
-        <TheStationSettings/>
-        <div class="player-seek-slider">
-            <p class="start-time">
-                {{ convertToTime(time) }}
-            </p>
+    <Transition>
+        <div
+            v-show="currentTrack"
+            class="player-container">
+            <TheStationSettings/>
+            <div class="player-seek-slider">
+                <p class="start-time">
+                    {{ convertToTime(player.time) }}
+                </p>
 
-            <RangeSlider
-                :max-value="duration"
-                :step="0.01"
-                :value="time"
-                @change="setTime"/>
+                <RangeSlider
+                    :max-value="player.duration"
+                    :step="0.01"
+                    :value="player.time"
+                    @change="setTime"/>
 
-            <p class="end-time">
-                {{ convertToTime(duration) }}
-            </p>
-        </div>
-        <div class="player-body">
-            <audio
-                ref="audioFile"
-                autoplay
-                crossorigin
-                preload="auto"
-                style="display: none"
-                @buffered="update"
-                @loadeddata="load"
-                @pause="setPlayingState(false)"
-                @play="setPlayingState(true)"
-                @timeupdate="update"
-            />
-            <!--todo: сделать вывод саб заголовка ( Remix, MIX Instr. etc ) -->
-            <div
-                v-if="currentTrack"
-                class="player-track-info">
-                <img
-                    v-lazy="useImage(currentTrack.track)"
-                    alt="img"
-                    class="player-track-image">
-                <div class="player-track-text">
-                    <a
-                        class="player-track-title"
-                        href="#">
-                        {{ currentTrack.track.title }}
-                    </a>
-                    <div
-                        class="player-track-artist"
-                    >
-                        <RouterLink
-                            v-for="(artist, index) in currentTrack.track.artists"
-                            :key="artist.id"
-                            :to="{name: 'artist', params: {id: artist.id}}">
-                            {{ useArtistName(artist, index, currentTrack.track.artists.length) }}
-                        </RouterLink>
+                <p class="end-time">
+                    {{ convertToTime(player.duration) }}
+                </p>
+            </div>
+            <div class="player-body">
+                <audio
+                    ref="audio"
+                    autoplay
+                    crossorigin
+                    preload="auto"
+                    style="display: none"
+                    @buffered="update"
+                    @loadeddata="load"
+                    @pause="pause"
+                    @play="play"
+                    @timeupdate="update"
+                />
+                <!--todo: сделать вывод саб заголовка ( Remix, MIX Instr. etc ) -->
+                <div
+                    v-if="currentTrack"
+                    class="player-track-info">
+                    <img
+                        v-lazy="useImage(currentTrack.track)"
+                        alt="img"
+                        class="player-track-image">
+                    <div class="player-track-text">
+                        <a
+                            class="player-track-title"
+                            href="#">
+                            {{ currentTrack.track.title }}
+                        </a>
+                        <div class="player-track-artist">
+                            <ArtistsLinks
+                                :artists="currentTrack.track.artists"
+                                style="font-size: 12px"/>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <button
-                class="like control-btn"
-                @click="handleLike">
-                <i
-                    v-if="currentTrack?.liked"
-                    class="fas fa-heart"/>
-                <i
-                    v-else
-                    class="fal fa-heart"/>
-            </button>
-
-            <div class="player-body-controls">
                 <button
-                    v-if="!isStationPlaying"
-                    class="control-btn"
-                    @click="shuffleTracks">
+                    class="like control-btn"
+                    @click="handleLike">
                     <i
-                        :class="{'active': shuffle}"
-                        class="fal fa-random"/>
-                </button>
-                <button
-                    v-else
-                    class="control-btn">
-                    <i class="far fa-sliders-h"/>
+                        v-if="currentTrack?.liked"
+                        class="fas fa-heart"/>
+                    <i
+                        v-else
+                        class="fal fa-heart"/>
                 </button>
 
-                <button
-                    v-if="!isStationPlaying"
-                    class="control-btn"
-                    @click="prev">
-                    <i class="fal fa-step-backward"/>
-                </button>
-                <LoadingSpinner v-if="!loaded"/>
-                <div v-else>
+                <div class="player-body-controls">
                     <button
-                        v-if="playing"
+                        v-if="!isStationPlaying"
                         class="control-btn"
-                        @click="pause">
-                        <i class="fas fa-pause"/>
+                        @click="shuffleTracks">
+                        <i
+                            :class="{'active': shuffle}"
+                            class="fal fa-random"/>
+                    </button>
+                    <button
+                        v-else
+                        class="control-btn">
+                        <i class="far fa-sliders-h"/>
+                    </button>
+
+                    <button
+                        v-if="!isStationPlaying"
+                        class="control-btn"
+                        @click="prev">
+                        <i class="fal fa-step-backward"/>
+                    </button>
+                    <LoadingSpinner v-if="!player.loaded"/>
+                    <div v-else>
+                        <button
+                            v-if="player.playing"
+                            class="control-btn"
+                            @click="pause">
+                            <i class="fas fa-pause"/>
+                        </button>
+                        <button
+                            v-else
+                            class="control-btn"
+                            @click="play">
+                            <i class="fas fa-play"/>
+                        </button>
+                    </div>
+
+                    <button
+                        class="control-btn"
+                        @click="next">
+                        <i class="fal fa-step-forward"/>
+                    </button>
+                    <button
+                        class="control-btn"
+                        @click="repeat"
+                    >
+                        <i
+                            :class="repeatIcon"
+                            class="fal"/>
+                    </button>
+                </div>
+                <div class="volume-container">
+                    <button
+                        v-if="player.volume > 0"
+                        class="control-btn"
+                        @click="mute">
+                        <i
+                            :class="volumeIcon"
+                            class="fal"/>
                     </button>
                     <button
                         v-else
                         class="control-btn"
-                        @click="play">
-                        <i class="fas fa-play"/>
+                        @click="unmute">
+                        <i class="fal fa-volume-mute"/>
                     </button>
+
+                    <RangeSlider
+                        :max-value="100"
+                        :value="player.volume"
+                        @change="setVolume"
+                    />
                 </div>
-
-                <button
-                    class="control-btn"
-                    @click="next">
-                    <i class="fal fa-step-forward"/>
-                </button>
-                <button
-                    class="control-btn"
-                    @click="repeat"
-                >
-                    <i
-                        :class="repeatIcon"
-                        class="fal"/>
-                </button>
-            </div>
-            <div class="volume-container">
-                <button
-                    v-if="volume > 0"
-                    class="control-btn"
-                    @click="mute">
-                    <i
-                        :class="volumeIcon"
-                        class="fal"/>
-                </button>
-                <button
-                    v-else
-                    class="control-btn"
-                    @click="unmute">
-                    <i class="fal fa-volume-mute"/>
-                </button>
-
-                <RangeSlider
-                    :max-value="100"
-                    :value="volume"
-                    @change="setVolume"
-                />
             </div>
         </div>
-    </div>
+    </Transition>
 </template>
 
-<script>
+<script setup>
 import useImage from '../composables/useImage.js';
-import MusicApi from '../mixins/MusicApi';
 import RangeSlider from './RangeSlider.vue';
 import LoadingSpinner from './LoadingSpinner.vue';
 import TheStationSettings from './TheStationSettings.vue';
 import useLikeAction from '../composables/useLikeAction.js';
-import useArtistName from '../composables/useArtistName.js';
+import { computed, inject, onMounted, ref, watch } from 'vue';
+import { useStore } from 'vuex';
+import sendStationFeedback from '../composables/useSendStationFeedback.js';
+import useTrackDirectLink from '../composables/useTrackDirectLink.js';
+import ArtistsLinks from './ArtistsLinks.vue';
 
-export default {
-    name: 'ThePlayer',
-    components: {TheStationSettings, LoadingSpinner, RangeSlider},
-    mixins: [MusicApi],
-    setup() {
-        return {
-            useArtistName,
-            useImage,
-        };
-    },
-    data() {
-        return {
-            player: null,
-            time: 0,
-            duration: 0,
-            buffered: 0,
-            playing: false,
-            volume: 20,
-            loaded: false,
-            volumeBackup: 0,
-            currentTrackLiked: false,
-        };
-    },
-    computed: {
-        shuffle() {
-            return this.$store.state.player.shuffle;
-        },
-        currentTrack() {
-            if (!this.$store.state.track.queue.length)
-                return null;
+const store = useStore();
+const request = inject('$request');
 
-            let randIndex = Math.floor(
-                Math.random() * (this.$store.state.track.queue.length - 1));
+const audio = ref(null);
+const player = ref({
+    player: null,
+    time: 0,
+    duration: 0,
+    buffered: 0,
+    playing: false,
+    volume: 20,
+    loaded: false,
+    volumeBackup: 0,
+    currentTrackLiked: false,
+});
 
-            let track = this.$store.state.track.queue[this.shuffle
-                ? randIndex
-                : 0];
+onMounted(() => {
+    audio.value.volume = player.value.volume * 0.01;
+});
 
-            this.$store.dispatch('setTrackIndex', track.track.id);
-            this.$store.dispatch('setRpc', track.track.title);
+const shuffle = computed(() => store.state.player.shuffle);
 
-            return track;
-        },
-        volumeIcon() {
-            if (this.volume === 0)
-                return 'fa-volume-off';
-            else if (this.volume <= 25)
-                return 'fa-volume-down';
-            else if (this.volume >= 75)
-                return 'fa-volume-up';
-            else
-                return 'fa-volume';
-        },
-        repeatIcon() {
-            if (this.$store.state.player.repeat === 1)
-                return 'fa-repeat active';
-            else if (this.$store.state.player.repeat === 2)
-                return 'fa-repeat-1 active';
-            else
-                return 'fa-repeat';
-        },
-        isStationPlaying() {
-            return this.$store.state.stations.isPlaying;
-        }
-    },
-    watch: {
-        playing(value) {
-            this.$store.dispatch('setPlaying', value);
+const currentTrack = computed(() => {
+    if (!store.state.track.queue.length)
+        return null;
 
-            if (value)
-                return this.play();
+    let randIndex = Math.floor(
+        Math.random() * (store.state.track.queue.length - 1));
 
-            this.pause();
-        },
-        volume(value) {
-            this.player.volume = value * 0.01;
-        },
-        async currentTrack(value) {
-            if (!value)
-                return;
+    let track = store.state.track.queue[shuffle.value
+        ? randIndex
+        : 0];
 
-            this.currentTrackLiked = value?.liked;
+    store.dispatch('setTrackIndex', track.track.id);
+    store.dispatch('setRpc', track.track.title);
 
-            await this.player.pause();
-            {
-                this.player.currentTime = 0;
-                this.loaded = false;
-                this.player.src = await this.getTrackDirectLink(value.id || value.track.id);
-                await this.player.load();
-            }
-            await this.player.play();
-        },
-        async time(value) {
-            if (value >= this.duration) {
-                await this.next(false);
-            }
-        }
-    },
-    mounted() {
-        this.player = this.$refs.audioFile;
-        this.player.volume = this.volume * 0.01;
-    },
-    methods: {
-        play() {
-            this.player.play();
-        },
-        pause() {
-            this.player.pause();
-        },
-        async next(skip = true) {
-            //if repeat is set
-            if (this.$store.state.player.repeat > 0) {
-                //repeat once
-                if (this.$store.state.player.repeat === 1)
-                    this.$store.dispatch('setRepeat', 0);
+    return track;
+});
 
-                return this.player.currentTime = 0;
-            }
+const volumeIcon = computed(() => {
+    if (player.value.volume === 0)
+        return 'fa-volume-off';
+    else if (player.value.volume <= 25)
+        return 'fa-volume-down';
+    else if (player.value.volume >= 75)
+        return 'fa-volume-up';
+    else
+        return 'fa-volume';
+});
 
-            this.pause();
-            this.$store.dispatch('addToPlayed', this.currentTrack);
-            this.$store.dispatch('removeFromQueue', this.currentTrack);
-
-            if (this.$store.state.stations.isPlaying) {
-                await this.sendStationFeedback(skip ? 'skip' : 'trackFinished',
-                    this.player.currentTime,
-                    this.$store.state.stations.current.batch_id,
-                    `${this.currentTrack.track.id}:${this.currentTrack.track.albums[0].id}`,
-                );
-
-                await this.loadNewStationTracks();
-
-                await this.sendStationFeedback('trackStarted',
-                    null,
-                    this.$store.state.stations.current.batch_id,
-                    `${this.currentTrack.track.id}:${this.currentTrack.track.albums[0].id}`,
-                );
-            }
-
-        },
-        prev() {
-            if (this.time > 3) {
-                this.player.currentTime = 0;
-            } else {
-                this.pause();
-                this.$store.dispatch('unshiftToQueue', this.$store.state.track.played.pop());
-            }
-        },
-        shuffleTracks() {
-            this.$store.dispatch('setShuffle', !this.shuffle);
-        },
-        update() {
-            this.time = this.player.currentTime;
-            this.buffered = this.player.buffered.length ? this.player.buffered.end(0) : 0;
-        },
-        load() {
-            if (this.player.readyState >= 2) {
-                this.loaded = true;
-                this.duration = parseInt(this.player.duration);
-                return this.playing;
-            }
-            throw new Error('Failed to load sound file.');
-        },
-        mute() {
-            this.volumeBackup = this.volume;
-            this.volume = 0;
-        },
-        unmute() {
-            this.volume = this.volumeBackup;
-        },
-        repeat() {
-            if (this.$store.state.player.repeat < 2) {
-                this.$store.dispatch('incrementRepeat');
-            } else
-                this.$store.dispatch('setRepeat', 0);
-        },
-        convertToTime(value) {
-            const time = new Date(value * 1000).toISOString().substr(11, 8);
-            return time.indexOf('00:') === 0 ? time.substr(3) : time;
-        },
-        setPlayingState(value = null) {
-            this.playing = value === null ? !this.playing : value;
-        },
-        setVolume(volume) {
-            this.volume = volume;
-        },
-        setTime(time) {
-            this.player.currentTime = time;
-        },
-        async loadNewStationTracks() {
-            let newQueue = this.$store.state.track.queue[0];
-            await this.$store.dispatch('setQueue', newQueue);
-
-            let tracks = await this.getStationTracks(false,
-                this.$store.state.track.played[this.$store.state.track.played.length - 1]);
-
-            tracks = tracks.filter(item => item.track.id !== newQueue.track.id);
-
-            await this.$store.dispatch('addTracksToQueue', tracks);
-        },
-        async handleLike() {
-            let result = await useLikeAction(this.$request,
-                this.$store,
-                'track',
-                `${this.currentTrack.track.id}:${this.currentTrack.track.albums[0].id}`,
-                this.currentTrack?.liked);
-
-            if (Object.hasOwn(this.currentTrack, 'liked'))
-                this.currentTrack.liked = result;
-        }
+const repeatIcon = computed(() => {
+    switch (store.state.player.repeat) {
+        case 1:
+            return 'fa-repeat active';
+        case 2:
+            return 'fa-repeat-1 active';
+        default:
+            return 'fa-repeat';
     }
-};
+});
+
+const isStationPlaying = computed(() => store.state.stations.isPlaying);
+
+watch(player, async (value) => {
+
+    //Включаем плеер или ставим на паузу
+    await store.dispatch('setPlaying', value.playing);
+
+    //Устанавливаем громкость
+    audio.value.volume = value.volume * 0.01;
+
+    //Переключаем трек если время пришло
+    if (value.time >= value.duration && (value.time !== 0 && value.duration !== 0))
+        await next(false);
+
+}, {deep: true});
+
+watch(currentTrack, async (value) => {
+    if (!value)
+        return;
+
+    player.value.currentTrackLiked = value?.liked;
+
+    await pause();
+    {
+        audio.value.currentTime = 0;
+        player.value.loaded = false;
+        audio.value.src = await useTrackDirectLink(request, value.id || value.track.id);
+        await audio.value.load();
+    }
+    await play();
+});
+
+async function play() {
+    await audio.value.play();
+    player.value.playing = true;
+}
+
+async function pause() {
+    await audio.value.pause();
+    player.value.playing = false;
+}
+
+async function next(skip = true) {
+    //if repeat is set
+    if (store.state.player.repeat > 0) {
+        //repeat once
+        if (store.state.player.repeat === 1)
+            await store.dispatch('setRepeat', 0);
+
+        return audio.value.currentTime = 0;
+    }
+
+    await pause();
+    await store.dispatch('addToPlayed', currentTrack.value);
+    await store.dispatch('removeFromQueue', currentTrack.value);
+
+    if (store.state.stations.isPlaying) {
+
+        await sendStationFeedback(
+            store,
+            request,
+            skip ? 'skip' : 'trackFinished',
+            audio.value.currentTime,
+            store.state.stations.current.batch_id,
+            `${currentTrack.value.track.id}:${currentTrack.value.track.albums[0].id}`,
+        );
+
+        await loadNewStationTracks();
+
+        await sendStationFeedback(
+            store,
+            request,
+            'trackStarted',
+            null,
+            store.state.stations.current.batch_id,
+            `${currentTrack.value.track.id}:${currentTrack.value.track.albums[0].id}`,
+        );
+    }
+}
+
+async function prev() {
+    if (player.value.time > 3) {
+        audio.value.currentTime = 0;
+    } else {
+        await pause();
+        await store.dispatch('unshiftToQueue', store.state.track.played.pop());
+    }
+}
+
+async function shuffleTracks() {
+    await store.dispatch('setShuffle', !shuffle.value);
+}
+
+function update() {
+    player.value.time = audio.value.currentTime;
+    player.value.buffered = audio.value.buffered.length ? audio.value.buffered.end(0) : 0;
+}
+
+function load() {
+    if (audio.value.readyState >= 2) {
+        player.value.loaded = true;
+        player.value.duration = parseInt(audio.value.duration);
+        return audio.value.play();
+    }
+    throw new Error('Failed to load sound file.');
+}
+
+function mute() {
+    player.value.volumeBackup = player.value.volume;
+    player.value.volume = 0;
+}
+
+function unmute() {
+    player.value.volume = player.value.volumeBackup;
+}
+
+function repeat() {
+    if (store.state.player.repeat < 2) {
+        store.dispatch('incrementRepeat');
+    } else
+        store.dispatch('setRepeat', 0);
+}
+
+function convertToTime(value) {
+    const time = new Date(value * 1000).toISOString().substr(11, 8);
+    return time.indexOf('00:') === 0 ? time.substr(3) : time;
+}
+
+function setVolume(volume) {
+    player.value.volume = volume;
+}
+
+function setTime(time) {
+    audio.value.currentTime = time;
+}
+
+async function loadNewStationTracks() {
+    let newQueue = store.state.track.queue[0];
+    await store.dispatch('setQueue', newQueue);
+
+    let tracks = await getStationTracks(false,
+        store.state.track.played[store.state.track.played.length - 1]);
+
+    tracks = tracks.filter(item => item.track.id !== newQueue.track.id);
+
+    await store.dispatch('addTracksToQueue', tracks);
+}
+
+async function handleLike() {
+    let result = await useLikeAction(request,
+        store,
+        'track',
+        `${currentTrack.value.track.id}:${currentTrack.value.track.albums[0].id}`,
+        currentTrack.value?.liked);
+
+    if (Object.hasOwn(currentTrack, 'liked'))
+        currentTrack.value.liked = result;
+}
+
+async function getStationTracks(settings = false, track_id_before = -1) {
+    let params = track_id_before ? {'queue': track_id_before} : (settings ? {'settings2': 'true'} : false);
+
+    let res = await request.get(`rotor/station/${store.state.stations.current.name}/tracks`, {
+        data: params,
+    });
+
+    await store.dispatch('setCurrentStationBatchId', res.data.result.batchId);
+
+    return res.data.result.sequence;
+}
 </script>
 
 <style scoped>
@@ -452,22 +471,8 @@ export default {
 }
 
 .player-track-artist {
-    font-weight: 400;
-    font-size: 12px;
-    line-height: 16px;
     color: #8E919A;
     white-space: nowrap;
-    text-overflow: ellipsis;
-    word-break: normal;
-    overflow: hidden;
-}
-
-.player-track-artist a {
-    cursor: pointer;
-}
-
-.player-track-artist a:hover {
-    text-decoration: underline;
 }
 
 .player-body-controls {
@@ -491,6 +496,16 @@ export default {
     flex-direction: row;
     align-items: center;
     margin-left: auto;
+}
+
+.v-enter-active,
+.v-leave-active {
+    transition: transform 0.5s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+    transform: translateY(120%);
 }
 
 </style>

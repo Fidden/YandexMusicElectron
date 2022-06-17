@@ -7,15 +7,6 @@ import VueLazyLoad from 'vue-lazyload';
 import { vue3Debounce } from 'vue-debounce';
 
 const app = createApp(App);
-app.config.globalProperties.$axios = axios;
-app.config.globalProperties.$request = axios.create({
-	baseURL: 'https://api.music.yandex.net',
-	headers: {
-		'Accept-Language': 'ru',
-		'Content-Type': 'application/json;charset=utf-8',
-	},
-});
-
 app.provide('$request', axios.create({
 	baseURL: 'https://api.music.yandex.net',
 	headers: {
